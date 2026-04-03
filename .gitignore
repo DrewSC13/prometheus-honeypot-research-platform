@@ -1,0 +1,54 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Rust
+target/
+Cargo.lock
+
+# Logs
+*.log
+logs/
+*.out
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Docker
+docker-data/
+*.pid
+
+# PostgreSQL / RabbitMQ temp data
+data/
+.pgdata/
+rabbitmq_data/
+
+# TUI / cache
+.cache/
+tmp/
