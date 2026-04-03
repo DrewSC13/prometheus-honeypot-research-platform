@@ -1,24 +1,23 @@
 {
   "schema_version": "event_schema_v1",
-  "event_id": "11111111-1111-4111-8111-111111111111",
-  "timestamp": "2026-04-03T20:10:00Z",
+  "event_id": "33333333-3333-4333-8333-333333333333",
+  "timestamp": "2026-04-03T20:10:04Z",
   "protocol": "ssh",
   "source_ip": "192.168.56.10",
   "source_port": 49822,
   "destination_port": 22,
   "session_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-  "event_sequence": 1,
-  "event_type": "ssh.session_start",
+  "event_sequence": 3,
+  "event_type": "ssh.auth_result",
   "payload": {
-    "connection_state": "opened",
-    "client_banner": "SSH-2.0-OpenSSH_9.6",
-    "server_banner": "SSH-2.0-PrometheusSSH_0.1"
+    "success": false,
+    "reason": "invalid_credentials"
   },
   "metadata": {
     "sensor_id": "sensor-ssh-01",
     "sensor_type": "honeypot-rust",
     "transport": "amqp",
-    "ingest_source": "ssh-listener",
+    "ingest_source": "ssh-auth-handler",
     "capture_mode": "live"
   }
 }

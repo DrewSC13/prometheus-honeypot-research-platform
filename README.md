@@ -73,3 +73,38 @@ git checkout -b develop
 git checkout -b docs/bootstrap-project-structure
 git checkout -b feat/docker-base-services
 git checkout -b docs/event-schema-v1
+```
+
+## Inicio rápido
+```bash
+    1. Copiar variables de entorno:
+        cp .env.example .env
+    2. Levantar servicios base:
+        make up
+    3. Verificar estado:
+        make check
+    4. Ver logs:
+        make logs
+    5. Apagar entorno:
+        make down
+```
+
+### PostgreSQL
+- Host: `localhost`
+- Puerto: definido por `POSTGRES_PORT` en `.env`
+- Base de datos: definida por `POSTGRES_DB`
+- Usuario: definido por `POSTGRES_USER`
+
+### RabbitMQ
+- AMQP: localhost:5672
+- Management UI: http://localhost:15672
+- Usuario: prometheus
+- Contraseña: prometheus_dev_password
+
+### Documentación
+- docs/01_research/ → fundamento científico
+- docs/02_architecture/ → arquitectura general
+- docs/03_design/ → diseño técnico y contratos
+- docs/04_setup/ → instalación y entorno local
+- docs/05_experiments/ → evidencia experimental
+- docs/07_decisions/ → decisiones arquitectónicas (ADR)

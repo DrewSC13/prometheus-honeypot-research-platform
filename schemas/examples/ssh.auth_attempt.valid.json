@@ -1,0 +1,24 @@
+{
+  "schema_version": "event_schema_v1",
+  "event_id": "22222222-2222-4222-8222-222222222222",
+  "timestamp": "2026-04-03T20:10:03Z",
+  "protocol": "ssh",
+  "source_ip": "192.168.56.10",
+  "source_port": 49822,
+  "destination_port": 22,
+  "session_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "event_sequence": 2,
+  "event_type": "ssh.auth_attempt",
+  "payload": {
+    "username": "root",
+    "password": "toor123",
+    "auth_method": "password"
+  },
+  "metadata": {
+    "sensor_id": "sensor-ssh-01",
+    "sensor_type": "honeypot-rust",
+    "transport": "amqp",
+    "ingest_source": "ssh-auth-handler",
+    "capture_mode": "live"
+  }
+}

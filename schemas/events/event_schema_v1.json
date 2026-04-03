@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prometheus.local/schemas/events/event_schema_v1.json",
+  "title": "Prometheus Event Schema V1",
+  "description": "Contrato base para eventos emitidos por sensores del sistema Prometheus.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "timestamp",
+    "protocol",
+    "source_ip",
+    "source_port",
+    "destination_port",
+    "session_id",
+    "event_sequence",
+    "event_type",
+    "payload",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "event_schema_v1",
+      "description": "Versión explícita del contrato de evento."
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único del evento."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Marca temporal del evento en formato ISO 8601 con zona horaria."
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["ssh", "http"],
+      "description": "Protocolo al que pertenece el evento."
+    },
+    "source_ip": {
+      "type": "string",
+      "oneOf": [
+        { "format": "ipv4" },
+        { "format": "ipv6" }
+      ],
+      "description": "Dirección IP de origen observada."
+    },
+    "source_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Puerto de origen."
+    },
+    "destination_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Puerto destino del sensor."
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador de correlación de sesión o unidad conversacional."
+    },
+    "event_sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Secuencia incremental del evento dentro de la sesión."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "ssh.session_start",
+        "ssh.auth_attempt",
+        "ssh.auth_result",
+        "ssh.command_input",
+        "ssh.command_executed",
+        "ssh.session_end",
+        "ssh.connection_closed",
+        "http.request",
+        "http.response",
+        "http.probe_detected",
+        "http.request_complete"
+      ],
+      "description": "Tipo semántico del evento."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Carga útil específica del evento.",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadatos técnicos de trazabilidad, captura y procesamiento.",
+      "additionalProperties": true,
+      "properties": {
+        "sensor_id": {
+          "type": "string"
+        },
+        "sensor_type": {
+          "type": "string"
+        },
+        "transport": {
+          "type": "string"
+        },
+        "ingest_source": {
+          "type": "string"
+        },
+        "capture_mode": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.session_start" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["connection_state"],
+            "properties": {
+              "connection_state": {
+                "type": "string",
+                "enum": ["opened"]
+              },
+              "client_banner": {
+                "type": ["string", "null"]
+              },
+              "server_banner": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.auth_attempt" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["username", "password", "auth_method"],
+            "properties": {
+              "username": {
+                "type": "string",
+                "minLength": 1
+              },
+              "password": {
+                "type": "string"
+              },
+              "auth_method": {
+                "type": "string",
+                "enum": ["password", "publickey", "keyboard-interactive", "unknown"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.auth_result" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["success"],
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.command_input" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["raw_command"],
+            "properties": {
+              "raw_command": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.command_executed" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["normalized_command"],
+            "properties": {
+              "normalized_command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_command": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.session_end" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["duration_seconds"],
+            "properties": {
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "end_reason": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": { "const": "ssh.connection_closed" }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": { "const": "ssh" },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["reason"],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "had_authenticated_session": {
+                "type": ["boolean", "null"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
