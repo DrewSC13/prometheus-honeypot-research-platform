@@ -6,11 +6,10 @@ Motor analítico inicial de Prometheus.
 
 - Validación de eventos contra el contrato lógico del sistema
 - Deserialización de ejemplos
+- Consumo de eventos desde RabbitMQ
 - Base para agregación, features y fingerprinting
 
 ## Entorno
-
-Crear entorno virtual e instalar dependencias:
 
 ```bash
 python3 -m venv .venv
