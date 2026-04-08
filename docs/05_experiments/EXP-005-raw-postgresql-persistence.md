@@ -27,24 +27,12 @@ Si el consumidor Python valida correctamente los eventos y la persistencia está
 
 ## Resultados observados
 
-Pendiente de ejecución.
-
-## Evidencia
-
-Pendiente de ejecución.
+Se reconstruyeron sesiones SSH a partir de `events_raw` usando `session_id` y `event_sequence`. Para sesiones completas se calcularon variables temporales básicas, incluyendo `mean_dt`, `std_dt`, `burst_rate` y `temporal_entropy`.
 
 ## Problemas encontrados
 
-Pendiente de ejecución.
-
-## Correcciones aplicadas
-
-Pendiente de ejecución.
+Algunos eventos podían llegar y persistirse fuera de orden de consumo, pero el orden lógico fue preservado mediante `event_sequence`, lo que permitió reconstrucción correcta.
 
 ## Conclusión
 
-Pendiente de ejecución.
-
-## Siguiente paso
-
-Reconstruir sesiones SSH a partir de `session_id` y `event_sequence`.
+La agregación por sesión y el modelado temporal básico quedaron operativos, dejando preparada la base para fingerprinting y análisis de anomalías.

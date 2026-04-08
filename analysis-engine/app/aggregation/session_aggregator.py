@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict
+import math
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -71,11 +72,65 @@ def group_events_by_session(events: list[RawEvent]) -> dict[str, list[RawEvent]]
         grouped[event.session_id].append(event)
 
     for session_id in grouped:
-        grouped[session_id].sort(
-            key=lambda e: (e.event_sequence, e.event_timestamp)
-        )
+        grouped[session_id].sort(key=lambda e: (e.event_sequence, e.event_timestamp))
 
     return grouped
+
+
+def compute_dt_series(session_events: list[RawEvent]) -> list[float]:
+    dts: list[float] = []
+    for i in range(1, len(session_events)):
+        dt = (session_events[i].event_timestamp - session_events[i - 1].event_timestamp).total_seconds()
+        dts.append(max(dt, 0.0))
+    return dts
+
+
+def compute_mean(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    return sum(values) / len(values)
+
+
+def compute_std(values: list[float], mean_value: float) -> float:
+    if not values:
+        return 0.0
+    variance = sum((x - mean_value) ** 2 for x in values) / len(values)
+    return math.sqrt(variance)
+
+
+def compute_entropy(values: list[float], decimals: int = 3) -> float:
+    if not values:
+        return 0.0
+
+    rounded = [round(v, decimals) for v in values]
+    counts = Counter(rounded)
+    total = len(rounded)
+
+    entropy = 0.0
+    for count in counts.values():
+        p = count / total
+        entropy -= p * math.log2(p)
+
+    return entropy
+
+
+def compute_transition_auth_to_command_ratio(session_events: list[RawEvent]) -> float:
+    auth_to_command = 0
+    auth_like = 0
+
+    for i in range(len(session_events) - 1):
+        current_type = session_events[i].event_type
+        next_type = session_events[i + 1].event_type
+
+        if current_type in {"ssh.auth_attempt", "ssh.auth_result"}:
+            auth_like += 1
+            if next_type in {"ssh.command_input", "ssh.command_executed"}:
+                auth_to_command += 1
+
+    if auth_like == 0:
+        return 0.0
+
+    return auth_to_command / auth_like
 
 
 def compute_session_summary(session_events: list[RawEvent]) -> dict[str, Any]:
@@ -85,7 +140,6 @@ def compute_session_summary(session_events: list[RawEvent]) -> dict[str, Any]:
     start_time = first.event_timestamp
     end_time = last.event_timestamp
     duration_seconds = (end_time - start_time).total_seconds()
-
     total_events = len(session_events)
 
     usernames: set[str] = set()
@@ -107,9 +161,19 @@ def compute_session_summary(session_events: list[RawEvent]) -> dict[str, Any]:
             if payload.get("success") is False:
                 auth_failures += 1
 
-    auth_failure_ratio = (
-        auth_failures / auth_results if auth_results > 0 else 0.0
-    )
+    auth_failure_ratio = auth_failures / auth_results if auth_results > 0 else 0.0
+
+    dts = compute_dt_series(session_events)
+    mean_dt = compute_mean(dts)
+    std_dt = compute_std(dts, mean_dt)
+    temporal_entropy = compute_entropy(dts)
+
+    if duration_seconds > 0:
+        burst_rate = total_events / duration_seconds
+    else:
+        burst_rate = 0.0
+
+    transition_auth_to_command_ratio = compute_transition_auth_to_command_ratio(session_events)
 
     return {
         "session_id": first.session_id,
@@ -124,6 +188,11 @@ def compute_session_summary(session_events: list[RawEvent]) -> dict[str, Any]:
         "num_attempts": num_attempts,
         "unique_users": len(usernames),
         "auth_failure_ratio": auth_failure_ratio,
+        "mean_dt": mean_dt,
+        "std_dt": std_dt,
+        "burst_rate": burst_rate,
+        "temporal_entropy": temporal_entropy,
+        "transition_auth_to_command_ratio": transition_auth_to_command_ratio,
     }
 
 
@@ -207,14 +276,14 @@ def upsert_session_and_features(summary: dict[str, Any]) -> None:
                     summary["duration_seconds"],
                     summary["auth_failure_ratio"],
                     summary["unique_users"],
-                    0,      # unique_commands
-                    0.0,    # transition_auth_to_command_ratio
-                    0.0,    # cmd_token_entropy
-                    0.0,    # suspicious_token_ratio
-                    0.0,    # mean_dt
-                    0.0,    # std_dt
-                    0.0,    # burst_rate
-                    0.0,    # temporal_entropy
+                    0,  # unique_commands
+                    summary["transition_auth_to_command_ratio"],
+                    0.0,  # cmd_token_entropy
+                    0.0,  # suspicious_token_ratio
+                    summary["mean_dt"],
+                    summary["std_dt"],
+                    summary["burst_rate"],
+                    summary["temporal_entropy"],
                     FEATURE_VERSION,
                 ),
             )
@@ -238,7 +307,11 @@ def main() -> None:
             f"events={summary['total_events']} "
             f"attempts={summary['num_attempts']} "
             f"unique_users={summary['unique_users']} "
-            f"duration={summary['duration_seconds']:.3f}s"
+            f"duration={summary['duration_seconds']:.3f}s "
+            f"mean_dt={summary['mean_dt']:.3f}s "
+            f"std_dt={summary['std_dt']:.3f}s "
+            f"burst_rate={summary['burst_rate']:.3f} "
+            f"entropy={summary['temporal_entropy']:.3f}"
         )
 
     print("[OK] SSH session aggregation completed.")
