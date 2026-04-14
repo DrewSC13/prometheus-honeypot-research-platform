@@ -26,3 +26,8 @@ python -m app.fingerprinting.build_fingerprints
 
 ```bash
 python -m app.ml.anomaly_detection
+
+## Anomaly review
+
+```bash
+python -m app.ml.anomaly_review
