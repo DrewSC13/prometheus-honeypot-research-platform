@@ -9,6 +9,7 @@ def main() -> None:
         repo_root / "analysis-engine" / "sql" / "001_init_events_raw.sql",
         repo_root / "analysis-engine" / "sql" / "002_init_sessions.sql",
         repo_root / "analysis-engine" / "sql" / "003_add_fingerprint_fields.sql",
+        repo_root / "analysis-engine" / "sql" / "004_init_anomalies.sql",
     ]
 
     with get_connection() as conn:

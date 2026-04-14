@@ -21,3 +21,8 @@ pip install -r requirements.txt
 
 ```bash
 python -m app.fingerprinting.build_fingerprints
+
+## Anomaly detection v1
+
+```bash
+python -m app.ml.anomaly_detection
