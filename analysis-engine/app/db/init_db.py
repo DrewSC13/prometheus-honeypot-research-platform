@@ -8,6 +8,7 @@ def main() -> None:
     sql_files = [
         repo_root / "analysis-engine" / "sql" / "001_init_events_raw.sql",
         repo_root / "analysis-engine" / "sql" / "002_init_sessions.sql",
+        repo_root / "analysis-engine" / "sql" / "003_add_fingerprint_fields.sql",
     ]
 
     with get_connection() as conn:
